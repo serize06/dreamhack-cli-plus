@@ -3,6 +3,9 @@ export default function help() {
 Usage: dh <command> [options]
 
 Commands:
+  dh init [path]                   Set wargame home dir (all create/vm/analyze
+                                   will work in this dir regardless of cwd).
+                                   Omit path to show current setting.
   dh config                        Configure user information
     --email=<email>
     --password=<password>

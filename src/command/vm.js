@@ -10,17 +10,20 @@ import getArgs from '../util/getArgs.js'
 import { updateSolveTarget } from '../util/generateSolve.js'
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url))
-let EMAIL, PASSWORD, SESSIONID, CSRF
+let EMAIL, PASSWORD, SESSIONID, CSRF, HOME
 try {
   const data = JSON.parse(await fs.readFileSync(path.join(__dirname, '../data/user.json'), 'utf8'))
   EMAIL = data.email
   PASSWORD = data.password
   SESSIONID = data.sessionid
   CSRF = data.csrf
+  HOME = data.home
 } catch (err) {
   Log.error('User config not found. Please run \'dh config\' to set user config.')
   process.exit(1)
 }
+
+if (HOME && fs.existsSync(HOME)) process.chdir(HOME)
 
 export default async function vm(wargameLink) {
   const args = getArgs()

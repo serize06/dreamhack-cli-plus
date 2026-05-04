@@ -10,16 +10,19 @@ import Log from '../util/log.js'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
-let EMAIL, PASSWORD, SESSIONID, CSRF
+let EMAIL, PASSWORD, SESSIONID, CSRF, HOME
 try {
   const data = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/user.json'), 'utf8'))
   EMAIL = data.email
   PASSWORD = data.password
   SESSIONID = data.sessionid
   CSRF = data.csrf
+  HOME = data.home
 } catch {
   // analyze can run offline against a dir, so missing config is non-fatal
 }
+
+if (HOME && fs.existsSync(HOME)) process.chdir(HOME)
 
 function findWargameDirByName(name) {
   const cwd = process.cwd()
