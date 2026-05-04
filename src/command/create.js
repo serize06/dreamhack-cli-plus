@@ -68,6 +68,8 @@ export default async function create(wargameLink) {
     Log.info('Wargame Extracted')
     await fs.unlinkSync(`${wargame.name}.zip`)
     Log.info('Wargame Zip File Removed')
+
+    Docker.applyDockerfileChmods(`./${wargame.name}`)
   }
 
   if (args['d'] || args['docker']) {

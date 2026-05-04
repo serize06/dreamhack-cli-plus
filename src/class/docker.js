@@ -181,6 +181,67 @@ export default class Docker {
     }
   }
 
+  static applyDockerfileChmods(wargameDir) {
+    const dfPath = `${wargameDir}/Dockerfile`
+    if (!fs.existsSync(dfPath)) return
+
+    const df = fs.readFileSync(dfPath, 'utf8')
+
+    // Map container destination paths back to local source paths.
+    const dstToSrc = new Map()
+    const addRe = /^\s*(?:ADD|COPY)\s+(?:--[\w=:.-]+\s+)*(\S+)\s+(\S+)/img
+    let m
+    while ((m = addRe.exec(df)) !== null) {
+      const [, src, dst] = m
+      dstToSrc.set(dst, src)
+    }
+
+    const chmodRe = /^\s*RUN\s+chmod\s+(?:-R\s+)?([0-7]{3,4})\s+([^\n#]+)/img
+    let applied = 0
+    while ((m = chmodRe.exec(df)) !== null) {
+      const mode = parseInt(m[1], 8)
+      const targets = m[2].trim().split(/\s+/)
+      for (const dst of targets) {
+        const src = dstToSrc.get(dst)
+        if (!src) continue
+        const localPath = path.join(wargameDir, src)
+        try {
+          fs.chmodSync(localPath, mode)
+          Log.info(`chmod ${m[1]} ${src}`)
+          applied++
+        } catch {
+          // local file may not exist (e.g. dst was a generated path); skip
+        }
+      }
+    }
+    if (applied === 0) {
+      // Defensive fallback: any extracted ELF binary gets +x so user can `gdb ./binary`.
+      Docker._chmodElfFiles(wargameDir)
+    }
+  }
+
+  static _chmodElfFiles(dir) {
+    try {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name)
+        if (entry.isDirectory()) {
+          Docker._chmodElfFiles(full)
+        } else if (entry.isFile()) {
+          try {
+            const fd = fs.openSync(full, 'r')
+            const buf = Buffer.alloc(4)
+            fs.readSync(fd, buf, 0, 4, 0)
+            fs.closeSync(fd)
+            if (buf[0] === 0x7f && buf[1] === 0x45 && buf[2] === 0x4c && buf[3] === 0x46) {
+              fs.chmodSync(full, 0o755)
+              Log.info(`chmod 755 ${path.relative(dir, full)} (ELF)`)
+            }
+          } catch {}
+        }
+      }
+    } catch {}
+  }
+
   static async getDockerfile() {
     /* 1. traverse all files in wargame directory
      * 2. if there is Dockerfiles(They can be multiple), return paths of all Dockerfiles */
