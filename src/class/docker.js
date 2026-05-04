@@ -92,10 +92,33 @@ export default class Docker {
       // best-effort detection; fall through to bare run
     }
 
+    // Remove any prior container that would conflict: same image name OR same
+    // published port (catches stale containers from older image digests).
+    try {
+      const filters = [`--filter ancestor=${this.name}`]
+      const portMatch = portArgs.match(/-p\s+(\d+):/)
+      if (portMatch) filters.push(`--filter publish=${portMatch[1]}`)
+      const all = new Set()
+      for (const f of filters) {
+        const out = execSync(`docker ps -aq ${f}`).toString().trim()
+        out.split('\n').filter(Boolean).forEach(id => all.add(id))
+      }
+      if (all.size > 0) {
+        Log.info(`Removing ${all.size} conflicting container(s)`)
+        execSync(`docker rm -f ${[...all].join(' ')}`, { stdio: 'pipe' })
+      }
+    } catch {}
+
     const cmd = `docker run -d ${portArgs} ${this.name}${cmdArg ? ' ' + cmdArg : ''}`
     Log.info(`Docker Run - ${cmd}`)
-    this.id = (await execSync(cmd)).toString().slice(0, 12)
-    Log.info(`Docker ID - ${this.id}`)
+    try {
+      this.id = execSync(cmd).toString().slice(0, 12)
+      Log.info(`Docker ID - ${this.id}`)
+    } catch (err) {
+      const stderr = (err.stderr?.toString() || err.message).trim().split('\n').slice(0, 3).join(' | ')
+      Log.error(`Docker run failed: ${stderr}`)
+      process.exit(1)
+    }
   }
 
   static async ps() {
