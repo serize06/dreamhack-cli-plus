@@ -103,7 +103,8 @@ context.log_level = 'info'
 def conn(remote_=False):
     return remote(HOST, PORT) if remote_ else process(BINARY)
 
-io = conn(remote_=False)
+# Run \`python3 solve.py REMOTE\` to use the remote target instead of local process.
+io = conn(remote_=bool(args.REMOTE))
 
 # exploit here
 
