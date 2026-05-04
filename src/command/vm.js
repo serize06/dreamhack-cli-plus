@@ -53,13 +53,13 @@ export default async function vm(wargameLink) {
     const info = await wargame.get(sessionid)
     if (info?.host && info.portMap?.length) {
       const [, hostPort] = info.portMap[0]
-      updateSolveTarget(`./${wargame.name}`, info.host, hostPort)
+      updateSolveTarget(wargame.name, info.host, hostPort)
     }
   } else if (args['g'] || args['get']) {
     const info = await wargame.get(sessionid)
     if (info?.host && info.portMap?.length) {
       const [, hostPort] = info.portMap[0]
-      updateSolveTarget(`./${wargame.name}`, info.host, hostPort)
+      updateSolveTarget(wargame.name, info.host, hostPort)
     }
   } else if (args['d'] || args['delete']) {
     await wargame.delete(sessionid, csrfToken)

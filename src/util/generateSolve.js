@@ -38,10 +38,31 @@ function findXinetdPort(deployDir) {
   return null
 }
 
-export function updateSolveTarget(wargameDir, host, port) {
-  const solvePath = path.join(wargameDir, 'solve', 'solve.py')
-  if (!fs.existsSync(solvePath)) {
-    Log.info(`No solve/solve.py to update (run 'dh create' first)`)
+function findSolvePy(wargameName) {
+  const cwd = process.cwd()
+  const candidates = [
+    path.join(cwd, wargameName, 'solve', 'solve.py'),       // cwd is parent of wargame dir
+    path.join(cwd, 'solve', 'solve.py'),                    // cwd is the wargame dir
+    path.join(cwd, '..', 'solve', 'solve.py'),              // cwd is the solve dir itself
+  ]
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c
+  }
+  // Walk up a few levels in case cwd is deeper inside the wargame tree
+  let dir = cwd
+  for (let i = 0; i < 4; i++) {
+    dir = path.dirname(dir)
+    if (dir === '/' || dir === '.') break
+    const p = path.join(dir, wargameName, 'solve', 'solve.py')
+    if (fs.existsSync(p)) return p
+  }
+  return null
+}
+
+export function updateSolveTarget(wargameName, host, port) {
+  const solvePath = findSolvePy(wargameName)
+  if (!solvePath) {
+    Log.info(`No solve/solve.py found near cwd (run 'dh create' first)`)
     return
   }
   const original = fs.readFileSync(solvePath, 'utf8')
@@ -54,7 +75,7 @@ export function updateSolveTarget(wargameDir, host, port) {
     return
   }
   fs.writeFileSync(solvePath, updated)
-  Log.success(`solve.py target → ${host}:${port}`)
+  Log.success(`solve.py target → ${host}:${port}  (${solvePath})`)
 }
 
 export default function generateSolve(wargameDir) {
