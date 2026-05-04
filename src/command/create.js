@@ -10,6 +10,7 @@ import Wargame from '../class/wargame.js'
 import Log from '../util/log.js'
 import downloadFile from '../util/downloadFile.js'
 import getArgs from '../util/getArgs.js'
+import generateSolve from '../util/generateSolve.js'
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url))
 let EMAIL, PASSWORD, SESSIONID, CSRF
@@ -70,6 +71,7 @@ export default async function create(wargameLink) {
     Log.info('Wargame Zip File Removed')
 
     Docker.applyDockerfileChmods(`./${wargame.name}`)
+    generateSolve(`./${wargame.name}`)
   }
 
   if (args['d'] || args['docker']) {
