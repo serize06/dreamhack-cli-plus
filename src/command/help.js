@@ -18,6 +18,11 @@ Commands:
     -d --delete                    Delete VM
   dh submit <wargame_link>         Submit flag
     --flag=<flag>
+  dh analyze [link_or_path]        Static analysis dumped to solve/analysis.md:
+                                   checksec, symbols, ROP gadgets, libc info,
+                                   leak→libc_base offset table, one_gadget
+                                   candidates, heap-base unmangle snippets.
+                                   Omit arg to use cwd.
   dh help                          Display help for command
   `)
 }
