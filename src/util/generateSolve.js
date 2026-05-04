@@ -38,6 +38,25 @@ function findXinetdPort(deployDir) {
   return null
 }
 
+export function updateSolveTarget(wargameDir, host, port) {
+  const solvePath = path.join(wargameDir, 'solve', 'solve.py')
+  if (!fs.existsSync(solvePath)) {
+    Log.info(`No solve/solve.py to update (run 'dh create' first)`)
+    return
+  }
+  const original = fs.readFileSync(solvePath, 'utf8')
+  const updated = original.replace(
+    /^HOST,\s*PORT\s*=.*$/m,
+    `HOST, PORT = '${host}', ${port}`
+  )
+  if (updated === original) {
+    Log.info(`solve.py has no 'HOST, PORT = ...' line; left unchanged`)
+    return
+  }
+  fs.writeFileSync(solvePath, updated)
+  Log.success(`solve.py target → ${host}:${port}`)
+}
+
 export default function generateSolve(wargameDir) {
   const solveDir = path.join(wargameDir, 'solve')
   if (fs.existsSync(solveDir)) {

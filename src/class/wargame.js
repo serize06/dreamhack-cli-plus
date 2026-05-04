@@ -84,11 +84,14 @@ export default class Wargame {
           .map((val) => `https://${host}:${val[1]}/`)
           .reduce((prev, curr, idx) => (idx === 0 ? curr : `${prev}, ${curr}`))
         }`)
+        return { host, portMap }
       } else {
         Log.error(`VM is not running`)
+        return null
       }
     } catch (err) {
       Log.error(`VM get failed (${err.response?.status || err.code})`)
+      return null
     }
   }
 

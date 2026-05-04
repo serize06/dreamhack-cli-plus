@@ -7,6 +7,7 @@ import Wargame from '../class/wargame.js'
 
 import Log from '../util/log.js'
 import getArgs from '../util/getArgs.js'
+import { updateSolveTarget } from '../util/generateSolve.js'
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url))
 let EMAIL, PASSWORD, SESSIONID, CSRF
@@ -49,9 +50,17 @@ export default async function vm(wargameLink) {
 
   if (args['c'] || args['create']) {
     await wargame.create(sessionid, csrfToken)
-    await wargame.get(sessionid)
+    const info = await wargame.get(sessionid)
+    if (info?.host && info.portMap?.length) {
+      const [, hostPort] = info.portMap[0]
+      updateSolveTarget(`./${wargame.name}`, info.host, hostPort)
+    }
   } else if (args['g'] || args['get']) {
-    await wargame.get(sessionid)
+    const info = await wargame.get(sessionid)
+    if (info?.host && info.portMap?.length) {
+      const [, hostPort] = info.portMap[0]
+      updateSolveTarget(`./${wargame.name}`, info.host, hostPort)
+    }
   } else if (args['d'] || args['delete']) {
     await wargame.delete(sessionid, csrfToken)
   } else {
